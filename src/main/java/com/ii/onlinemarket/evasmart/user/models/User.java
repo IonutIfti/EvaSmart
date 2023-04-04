@@ -2,7 +2,7 @@ package com.ii.onlinemarket.evasmart.user.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -29,17 +29,17 @@ public class User {
 
 
     @Column(name="username")
-    @NotNull
+    @NotBlank
     @Size(min=3, max=50)
     private String username;
 
     @Column(name="email")
-    @NotNull
+    @NotBlank
     @Email
     private String email;
 
     @Column(name="password")
-    @NotNull
+    @NotBlank
     @Size(min=8, max=100)
     private String password;
 }
