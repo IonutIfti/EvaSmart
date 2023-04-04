@@ -1,9 +1,15 @@
 package com.ii.onlinemarket.evasmart.user.services;
 
-import com.ii.onlinemarket.evasmart.user.models.User;
+import com.ii.onlinemarket.evasmart.user.payload.UserDTO;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface UserService {
-    Optional<User> findByEmail(String email);
+    UserDTO createUser(UserDTO userDTO);
+
+    UserDTO getUserById(Long id);
+
+    List<UserDTO> getAllUsers();
+
+    void deleteUserById(Long id);
 }
