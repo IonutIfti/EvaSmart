@@ -27,7 +27,6 @@ public class User {
     @Column(name="id")
     private Long id;
 
-
     @Column(name="username")
     @NotBlank
     @Size(min=3, max=50)
