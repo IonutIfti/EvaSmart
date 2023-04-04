@@ -19,7 +19,7 @@ public class UserController {
     @PostMapping("/createUser")
     public ResponseEntity<UserDTO> createUser(@RequestBody @Valid UserDTO userDTO) {
         UserDTO savedUser = userService.createUser(userDTO);
-        return ResponseEntity.created(URI.create("/users/" + savedUser.getId())).body(savedUser);
+        return ResponseEntity.created(URI.create("/users/createUser/" + savedUser.getId())).body(savedUser);
     }
 
     @GetMapping("/getUser/{id}")
