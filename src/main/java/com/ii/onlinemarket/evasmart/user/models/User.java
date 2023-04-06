@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Getter
 @Setter
 @Data
@@ -41,4 +44,19 @@ public class User {
     @NotBlank
     @Size(min=8, max=100)
     private String password;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Cart> carts = new HashSet<>();
+
+
+    public void addCart(Cart cart) {
+        carts.add(cart);
+        cart.setUser(this);
+    }
+
+    public void removeCart(Cart cart) {
+        cart.getItems().forEach(item -> item.setCart(null));
+        carts.remove(cart);
+        cart.setUser(null);
+    }
 }

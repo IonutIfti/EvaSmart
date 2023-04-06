@@ -1,6 +1,7 @@
 package com.ii.onlinemarket.evasmart.user.services.impl;
 
 import com.ii.onlinemarket.evasmart.user.exceptions.CartItemNotFoundException;
+import com.ii.onlinemarket.evasmart.user.exceptions.CartServiceException;
 import com.ii.onlinemarket.evasmart.user.mappers.CartItemMapper;
 import com.ii.onlinemarket.evasmart.user.models.CartItem;
 import com.ii.onlinemarket.evasmart.user.payload.CartItemDTO;
@@ -19,8 +20,17 @@ public class CartItemServiceImpl implements CartItemService {
     private final CartItemMapper cartItemMapper;
     @Override
     public CartItemDTO getCartItemById(Long id) {
-        CartItem cartItem = cartItemRepository.findById(id).orElseThrow(() ->
-                new CartItemNotFoundException(String.format("Cart item with ID %d not found", id)));
-        return cartItemMapper.mapToDTO(cartItem);
+        try {
+            CartItem cartItem = cartItemRepository.findById(id).orElseThrow(() ->
+                    new CartItemNotFoundException(String.format("Cart item with ID %d not found", id)));
+            return cartItemMapper.mapToDTO(cartItem);
+        } catch (CartItemNotFoundException e) {
+            log.warn("Cart item with ID: {} - NOT FOUND", id);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting cart item by ID: {}", e.getMessage());
+            throw new CartServiceException("Error getting cart item by ID");
+        }
     }
+
 }

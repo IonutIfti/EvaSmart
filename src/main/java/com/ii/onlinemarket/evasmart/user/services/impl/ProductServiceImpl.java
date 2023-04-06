@@ -1,6 +1,7 @@
 package com.ii.onlinemarket.evasmart.user.services.impl;
 
 import com.ii.onlinemarket.evasmart.user.exceptions.ProductNotFoundException;
+import com.ii.onlinemarket.evasmart.user.exceptions.ProductServiceException;
 import com.ii.onlinemarket.evasmart.user.mappers.ProductMapper;
 import com.ii.onlinemarket.evasmart.user.models.Product;
 import com.ii.onlinemarket.evasmart.user.payload.ProductDTO;
@@ -21,14 +22,29 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDTO> getAllProducts() {
-        List<Product> products = productRepository.findAll();
-        return productMapper.listToDTO(products);
+        try {
+            List<Product> products = productRepository.findAll();
+            log.info("Retrieved all products");
+            return productMapper.listToDTO(products);
+        } catch (Exception e) {
+            log.error("Error getting all products: {}", e.getMessage());
+            throw new ProductServiceException("Error getting all products");
+        }
     }
 
     @Override
     public ProductDTO getProductById(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() ->
-                new ProductNotFoundException(String.format("Product with ID %d not found", id)));
-        return productMapper.mapToDto(product);
+        try {
+            Product product = productRepository.findById(id).orElseThrow(() ->
+                    new ProductNotFoundException(String.format("Product with ID %d not found", id)));
+            log.info("Found product with ID: {}",id);
+            return productMapper.mapToDto(product);
+        } catch (ProductNotFoundException e) {
+            log.warn("Product with ID: {} - NOT FOUND", id);
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting product by ID: {}", e.getMessage());
+            throw new ProductServiceException("Error getting product by ID");
+        }
     }
 }

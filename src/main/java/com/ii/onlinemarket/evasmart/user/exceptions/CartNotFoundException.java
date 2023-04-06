@@ -1,6 +1,14 @@
 package com.ii.onlinemarket.evasmart.user.exceptions;
 
+import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.NOT_FOUND)
+@NoArgsConstructor
 public class CartNotFoundException extends RuntimeException {
-    public CartNotFoundException(String format) {
+    public CartNotFoundException(String message) {
+        super(message);
     }
 }
+
