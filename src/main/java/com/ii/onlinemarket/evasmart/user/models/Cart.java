@@ -27,6 +27,7 @@ public class Cart {
     )
     private Long id;
 
+
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CartItem> items = new HashSet<>();
 
@@ -39,4 +40,18 @@ public class Cart {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private CartStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public void addItem(CartItem item) {
+        items.add(item);
+        item.setCart(this);
+    }
+
+    public void removeItem(CartItem item) {
+        items.remove(item);
+        item.setCart(null);
+    }
 }
