@@ -19,18 +19,10 @@ public class CartItemServiceImpl implements CartItemService {
     private final CartItemRepository cartItemRepository;
     private final CartItemMapper cartItemMapper;
     @Override
-    public CartItemDTO getCartItemById(Long id) {
-        try {
-            CartItem cartItem = cartItemRepository.findById(id).orElseThrow(() ->
-                    new CartItemNotFoundException(String.format("Cart item with ID %d not found", id)));
-            return cartItemMapper.mapToDTO(cartItem);
-        } catch (CartItemNotFoundException e) {
-            log.warn("Cart item with ID: {} - NOT FOUND", id);
-            throw e;
-        } catch (Exception e) {
-            log.error("Error getting cart item by ID: {}", e.getMessage());
-            throw new CartServiceException("Error getting cart item by ID");
-        }
+    public CartItemDTO getCartItemById(Long id) throws CartItemNotFoundException, CartServiceException {
+        CartItem cartItem = cartItemRepository.findById(id).orElseThrow(() ->
+                new CartItemNotFoundException(String.format("Cart item with ID %d not found", id)));
+        log.info("Found cartItem by ID: {}",id);
+        return cartItemMapper.mapToDTO(cartItem);
     }
-
 }
