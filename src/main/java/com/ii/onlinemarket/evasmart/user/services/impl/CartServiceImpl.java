@@ -1,7 +1,6 @@
 package com.ii.onlinemarket.evasmart.user.services.impl;
 
 import com.ii.onlinemarket.evasmart.user.exceptions.*;
-import com.ii.onlinemarket.evasmart.user.mappers.CartItemMapper;
 import com.ii.onlinemarket.evasmart.user.mappers.CartMapper;
 import com.ii.onlinemarket.evasmart.user.models.Cart;
 import com.ii.onlinemarket.evasmart.user.models.CartItem;
@@ -28,137 +27,110 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
     private final CartItemRepository cartItemRepository;
-    private final CartItemMapper cartItemMapper;
     private final ProductRepository productRepository;
+
     @Override
-    public CartDTO createCart() {
-        try {
-            Cart cart = new Cart();
-            cart.setStatus(CartStatus.OPEN);
-            cart.setCreationDate(LocalDateTime.now());
-            cart.setModificationDate(LocalDateTime.now());
-            cart = cartRepository.save(cart);
-            log.info("Created cart with ID: {}", cart.getId());
-            return cartMapper.mapToDTO(cart);
-        } catch (Exception e) {
-            log.error("Error creating cart: {}", e.getMessage());
+    public CartDTO createCart() throws CartServiceException {
+        Cart cart = Cart.builder()
+                .status(CartStatus.OPEN)
+                .creationDate(LocalDateTime.now())
+                .modificationDate(LocalDateTime.now())
+                .build();
+
+        if (cart.getId() == null) {
+            log.error("Error creating cart: Cart ID is null");
             throw new CartServiceException("Error creating cart");
         }
+        cart = cartRepository.save(cart);
+        log.info("Created cart with ID: {}", cart.getId());
+        return cartMapper.mapToDTO(cart);
     }
 
-
     @Override
-    public CartDTO createCart(User user) {
-        try {
-            Cart cart = new Cart();
-            cart.setStatus(CartStatus.OPEN);
-            cart.setCreationDate(LocalDateTime.now());
-            cart.setModificationDate(LocalDateTime.now());
-            cart.setUser(user);
-            cart = cartRepository.save(cart);
-            log.info("Created cart with ID: {}", cart.getId());
-            return cartMapper.mapToDTO(cart);
-        } catch (Exception e) {
-            log.error("Error creating cart: {}", e.getMessage());
+    public CartDTO createCart(User user) throws CartOperationException {
+        Cart cart = Cart.builder()
+                .status(CartStatus.OPEN)
+                .creationDate(LocalDateTime.now())
+                .modificationDate(LocalDateTime.now())
+                .user(user)
+                .build();
+
+        if (cart.getId() == null) {
+            log.error("Error creating cart: Cart ID is null");
             throw new CartOperationException("Error creating cart");
         }
-    }
 
-
-    @Override
-    public CartDTO getCartById(Long id) {
-        try {
-            Cart cart = cartRepository.findById(id)
-                    .orElseThrow(() -> new CartNotFoundException(String.format("Cart with ID %d not found", id)));
-            log.info("Found cart with ID: {}", id);
-            return cartMapper.mapToDTO(cart);
-        } catch (CartNotFoundException e) {
-            log.warn("Cart with ID: {} - NOT FOUND", id);
-            throw e;
-        } catch (Exception e) {
-            log.error("Error getting cart by ID: {}", e.getMessage());
-            throw new CartServiceException("Error getting cart by ID");
-        }
-    }
-
-
-    @Override
-    public CartDTO addItemToCart(Long cartId, Long productId, int quantity) {
-        try {
-            Cart cart = cartRepository.findByIdAndStatus(cartId, CartStatus.OPEN)
-                    .orElseThrow(() -> new CartNotFoundException(
-                            String.format("Open cart with ID %d not found", cartId)));
-            Product product = productRepository.findById(productId).orElseThrow(() ->
-                    new ProductNotFoundException(String.format("Product with ID %d not found", productId)));
-            CartItem cartItem = new CartItem();
-            cartItem.setCart(cart);
-            cartItem.setProduct(product);
-            cartItem.setPrice(product.getPrice());
-            cartItem.setQuantity(quantity);
-            cartItem = cartItemRepository.save(cartItem);
-            cart.getItems().add(cartItem);
-            cart.setTotalPrice(cart.getTotalPrice().add(cartItem.getPrice().multiply(BigDecimal.valueOf(quantity))));
-            cart.setModificationDate(LocalDateTime.now());
-            cart = cartRepository.save(cart);
-            return cartMapper.mapToDTO(cart);
-        } catch (CartNotFoundException e) {
-            log.warn("Cart with ID: {} - NOT FOUND", cartId);
-            throw e;
-        } catch (ProductNotFoundException e) {
-            log.warn("Product with ID: {} - NOT FOUND", productId);
-            throw e;
-        } catch (Exception e) {
-            log.error("Error adding item to cart: {}", e.getMessage());
-            throw new CartOperationException("Error adding item to cart");
-        }
+        cart = cartRepository.save(cart);
+        log.info("Created cart with ID: {}", cart.getId());
+        return cartMapper.mapToDTO(cart);
     }
 
     @Override
-    public void removeItemFromCart(Long cartItemId) {
-        try {
-            CartItem cartItem = cartItemRepository.findById(cartItemId).orElseThrow(() ->
-                    new CartItemNotFoundException(String.format("Cart item with ID %d not found", cartItemId)));
-            Cart cart = cartItem.getCart();
-            cart.getItems().remove(cartItem);
-            cart.setTotalPrice(cart.getTotalPrice().subtract(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()))));
-            cart.setModificationDate(LocalDateTime.now());
-            cartRepository.save(cart);
-            cartItemRepository.delete(cartItem);
-            log.info("Cart item with ID: {} has been removed from cart with ID: {}", cartItemId, cart.getId());
-        } catch (CartItemNotFoundException e) {
-            log.warn("CartItemNotFoundException occurred while removing item from cart. Message: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Exception occurred while removing item from cart. Message: {}", e.getMessage());
-            throw new CartOperationException("An error occurred while removing item from cart.");
-        }
+    public CartDTO getCartById(Long id) throws CartNotFoundException, CartServiceException {
+        Cart cart = cartRepository.findById(id)
+                .orElseThrow(() -> new CartNotFoundException(String.format("Cart with ID %d not found", id)));
+
+        log.info("Found cart with ID: {}", id);
+        return cartMapper.mapToDTO(cart);
     }
 
     @Override
-    public CartDTO updateCartStatus(Long cartId, CartStatus status) {
-        try {
-            Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> new CartNotFoundException(String.format("Cart with ID %d not found", cartId)));
-            cart.setStatus(status);
-            cart.setModificationDate(LocalDateTime.now());
-            cart = cartRepository.save(cart);
-            return cartMapper.mapToDTO(cart);
-        } catch (CartNotFoundException e) {
-            log.error("CartNotFoundException in updateCartStatus method with message: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Exception in updateCartStatus method with message: {}", e.getMessage());
-            throw new CartServiceException("An error occurred while updating the cart status", e);
-        }
+    public CartDTO addItemToCart(Long cartId, Long productId, int quantity)
+            throws CartNotFoundException, ProductNotFoundException, CartOperationException {
+        Cart cart = cartRepository.findByIdAndStatus(cartId, CartStatus.OPEN)
+                .orElseThrow(() -> new CartNotFoundException(
+                        String.format("Open cart with ID %d not found", cartId)));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(String.format("Product with ID %d not found", productId)));
+
+        CartItem cartItem = CartItem.builder()
+                .cart(cart)
+                .product(product)
+                .price(product.getPrice())
+                .quantity(quantity)
+                .build();
+
+        cartItem = cartItemRepository.save(cartItem);
+
+        cart.getItems().add(cartItem);
+        cart.setTotalPrice(cart.getTotalPrice().add(cartItem.getPrice().multiply(BigDecimal.valueOf(quantity))));
+        cart.setModificationDate(LocalDateTime.now());
+        cart = cartRepository.save(cart);
+
+        return cartMapper.mapToDTO(cart);
     }
 
     @Override
-    public List<Cart> getCartsByUser(User user) {
-        try {
-            return cartRepository.findByUser(user);
-        } catch (Exception e) {
-            log.error("Exception in getCartsByUser method with message: {}", e.getMessage());
-            throw new CartServiceException("An error occurred while retrieving carts by user", e);
-        }
+    public void removeItemFromCart(Long cartItemId) throws CartItemNotFoundException, CartOperationException {
+        CartItem cartItem = cartItemRepository.findById(cartItemId).orElseThrow(() ->
+                new CartItemNotFoundException(String.format("Cart item with ID %d not found", cartItemId)));
+
+        Cart cart = cartItem.getCart();
+        cart.getItems().remove(cartItem);
+        cart.setTotalPrice(cart.getTotalPrice().subtract(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()))));
+        cart.setModificationDate(LocalDateTime.now());
+        cartRepository.save(cart);
+        cartItemRepository.delete(cartItem);
+
+        log.info("Cart item with ID: {} has been removed from cart with ID: {}", cartItemId, cart.getId());
+    }
+
+    @Override
+    public CartDTO updateCartStatus(Long cartId, CartStatus status) throws CartNotFoundException, CartServiceException {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException(String.format("Cart with ID %d not found", cartId)));
+
+        cart.setStatus(status);
+        cart.setModificationDate(LocalDateTime.now());
+        cart = cartRepository.save(cart);
+        log.info("Cart with ID: {}, status updated", cartId);
+        return cartMapper.mapToDTO(cart);
+    }
+
+    @Override
+    public List<Cart> getCartsByUser(User user) throws CartServiceException {
+        log.info("Found cart by user ID: {}", user.getId());
+        return cartRepository.findByUser(user);
     }
 }
